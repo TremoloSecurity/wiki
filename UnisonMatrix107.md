@@ -77,7 +77,10 @@ Unison in general supports LDAPv3 compliant directories and databases that suppo
 | Amazon Web Services | SimpleDB         | N/A                                 |       |
 | Microsoft           | SQL Server       | 2008,2012                           |       |
 | PostgreSQL          | PostgreSQL       | 9.x                                 |       |
-| Tremolo Security    | Unison           | &lt;= 1.0.5                         |       |
+| Tremolo Security    | Unison           | &lt;= 1.0.7                         |       |
+| OpenStack           | Keystone         | v3                                  |       |
+| OpenShift           | Origin / Enterprise | 3.0+                             |       |
+| Red Hat             | FreeIPA / Identity Management | 4.x                    |       |
 
 Last Mile Integration
 ---------------------
@@ -88,7 +91,7 @@ Last Mile Integration
 | Oracle         | J2EE               | N/A     | 1.4 - 7      | Java Servlet Filter                 |
 | Oracle         | Weblogic           | N/A     | 11g (10.3.6) | Identity Asserter                   |
 | RedHat / JBoss | Application Server | N/A     | 6,7          | Supports EAP 5.x                    |
-| Apache         | Tomcat             | N/A     | 5,6,7        | 5/6 - Servlet Filter, 6/7 Valve     |
+| Apache         | Tomcat             | N/A     | 5,6,7,8        | 5/6 - Servlet Filter, 6-8 Valve     |
 | Microsoft      | IIS                | Windows | 7.x          | IHttpModule                         |
 
 SAML2 Systems
