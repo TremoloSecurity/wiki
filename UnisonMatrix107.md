@@ -40,7 +40,7 @@ In general Unison supports LDAPv3 directories and databases with JDBC drivers. T
 | MariaDB               | MariaDB           | &lt;=10.1.x                            |       |
 | Amazon Web Services | SimpleDB         | N/A                                 |       |
 | Microsoft           | SQL Server       | 2008,2012                           |       |
-| Tremolo Security    | Unison           | &lt;= 1.0.5                         |       |
+| Tremolo Security    | Unison           | &lt;= 1.0.7                         |       |
 
 Authentication Mechanisms
 -------------------------
