@@ -4,7 +4,8 @@
 
 This page gives an in-depth analysis of Kubernetes' various authentication methods and
 provides several reference architectures for deploying an identity management solution
-with for Kubernetes.
+with for Kubernetes.  We will illustrate the examples using OpenUnison, but these concepts
+can be applied generically with other products and projects as well.
 
 ## SSO / Authentication
 
@@ -153,6 +154,142 @@ RBAC, or Role Based Access Control, is an authorization model for Kubernetes tha
 3.  Service Accounts
 
 In general, its not a good practice to add users directly to roles.  Roles are static (for 1.3 and 1.4) so adding subjects means patching or delete/create.  Also tracking who has access to what can be much more difficult (more on this later).
+
+Roles are scoped to a specific namespace, where as a ClusterRole applies to an entire cluster.  The relationships between objects are:
+
+| Object | Description |
+| ------ | ----------- |
+| Role or ClusterRole | Defines a set of urls and actions on those urls (name a namespace for Role) |
+| RoleBinding or ClusterRoleBinding | Defines the subjects |
+| Group / User / ServiceAccount | Data that identifies a user |
+
+### Configure Kubernetes
+
+To enable RBAC add the following api-server flags:
+
+| API Flag | Description |
+| -------- | ----------- |
+| --authorization-mode=RBAC | Tells the API server to use RBAC for authoriztions |
+| --runtime-config=extensions/v1beta1/networkpolicies=true,rbac.authorization.k8s.io/v1alpha1 | Enable the alpha API |
+| --authorization-rbac-super-user=kube-admin | Identify a super-user |
+
+The first flag tells the api server to use RBAC for authorizations.  The second flag tells the API server to enable the RBAC apis. Finally, the last flag tells the api server who the super user is.  
+
+The only flag that requires real discussion is the super user flag.  You can not create a policy that grants you more permisions then you have.  When starting up, the api server has no policies until you create them (this will change in 1.5 with bootstrap actions).  So if users have no authorizations they can't be authorized to create policies.  This is why you need a super user.  You CAN use an OIDC user as your super user, but our recommendation is to use a certificate user for a few reasons:
+
+1.  Certificate user's aren't reliant upon an external service
+2.  A certificate user can be locked down and stored in a secure environment as a "break glass in case of emergency" user
+
+If you do use an OIDC user, you will need to prepend the issuer to your username.  For instance if you want your super user to be mmosley from OIDC you would specify "https://mlb.tremolo.lan:8043/auth/idp/oidc#mmosley" with one exception, if your claim is an email address.
+
+### Policy Design
+
+Policy design is a very advanced topic and will vary greatly per deployment.  In general, keep it simple.  Very complex and granular entitlement solutions are extremely hard to manage and usually cause more harm then good.  If you find that you are creating more then three to five roles for any given deployment chances are they are too granular.
+
+#### Initial Policy
+
+In order to let anyone do the most basic tasks, access to certain apis is required.  The below policy api is a good start:
+
+```
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1alpha1
+metadata:
+  name: discovery
+rules:
+  - apiGroups: []
+    resources: []
+    verbs: ["get"]
+    nonResourceURLs: ["/version","/api", "/api/*","/apis", "/apis/*","/apis/apps/v1alpha1","/apis/autoscaling/v1","/apis/batch/v1","/apis/batch/v2alpha1","/apis/extensions/v1beta1","/apis/policy/v1alpha1","/apis/rbac.authorization.k8s.io/v1alpha1"]
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1alpha1
+metadata:
+  name: discovery-binding
+subjects:
+- kind: Group
+  name: users
+roleRef:
+  kind: ClusterRole
+  name: discovery
+```
+
+The first part of the YAML defines a cluster role, which is global to the entire cluster.  The nonResourceURLs were determined through trial-and-error so you may find that you need more.  NOTE: in 1.3 wildcard URLs do not work.  1.4 up will simplify this policy by eliminating specific URLs.
+
+The second part defines who has access to the role.  We listed the group "users" to make sure that all users in the group "users" can do this.  This means that every user that logs in MUST have the group "users".
+
+If you save this file as cluster-discovery.yaml you can deploy it:
+
+```
+$ kubectl create -f /path/to/cluster-discovery.yaml
+```
+
+#### Namespace Policies
+
+A common pattern is to create policies that isolate namespaces.  This pattern lets you define access to an individual namespace and equate a namespace with a team or project.  This is how OpenShift isolates individual projects.  The first step would be to create a namespace:
+
+```
+$ kubectl create namespace new-namespace
+```
+
+Once the namespace is created, create your policies.  The below policies creates two roles:
+
+1.  admin - Full access to create, run, destroy pods/routes/etc
+2.  viewer - View resources only
+
+```
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1alpha1
+metadata:
+  name: admin-role
+  namespace: new-namespace
+rules:
+- apiGroups: ["*"]
+  resources: ["*"]
+  verbs: ["*"]
+  nonResourceURLs: ["*"]
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1alpha1
+metadata:
+  name: admin-binding
+  namespace: new-namespace
+subjects:
+- kind: Group
+  name: new-namespace-admin
+roleRef:
+  kind: Role
+  name: admin-role
+  namespace: new-namespace
+---
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1alpha1
+metadata:
+  name: viewer-role
+  namespace: new-namespace
+rules:
+- apiGroups: ["*"]
+  resources: ["*"]
+  verbs: ["get","view","list","watch"]
+  nonResourceURLs: ["*"]
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1alpha1
+metadata:
+  name: viewer-binding
+  namespace: new-namespace
+subjects:
+- kind: Group
+  name: new-namespace-viewer
+roleRef:
+  kind: Role
+  name: viewer-role
+  namespace: new-namespace
+```
+
+The first block defines an admin role, with a role binding for a group named "new-namespace-admin", so a user that authenticates with a group "new-namespace-admin" will have full admin access to the new-namespace.  The second role only allows for "read" access if you have the group "new-namespace-viewer".  
+
+To update these roles for other namespaces, just change the "namespace" label whenever you find it to the name of your namespace.
+
 
 
 ## Reference Architectures
