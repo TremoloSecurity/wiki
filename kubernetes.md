@@ -290,9 +290,67 @@ The first block defines an admin role, with a role binding for a group named "ne
 
 To update these roles for other namespaces, just change the "namespace" label whenever you find it to the name of your namespace.
 
-
-
 ## Reference Architectures
+
+When designing an identity management solution for Kubernetes there are several points to take into account.  We'll cover each of these topics in detail.
+
+### How will uses authenticate?
+
+When identifying how users will authenticate remember that Kubernetes keep the following in mind:
+
+1.  Kubernetes has no way of triggering an authentication process
+2.  Once authenticated, the id_token needs to be provided to the api-server / kubectl
+3.  The id_token is short lived, so it will need to be refreshed often
+
+In addition, identify what policies are in place such as:
+
+1.  Does Kubernetes qualify as requiring multi-factor authentication?
+2.  Do you need to follow a privileged access policy?
+
+
+### How will users use kubectl?
+
+Once you have generated an id_token, how will you use it with kubectl?  In OIDC, both the id_token and access_token are meant to be short lived.  This makes sense, as an id_token stands on its own until it expires.  If I login with an id_token that says I have admin access and the token is valid for 5 minutes then for that 5 minutes I have all the access I could want.  What if in that time I lose my admin access?  How would Kubernetes stop me from performing admin actions?  It can't, the api-server never talks to the identity provider to validate that the id_token is still ok.
+
+#### Option 1 - OIDC Authenticator
+
+The first option is to use a new feature in 1.3 that isn't well documented called a custom authenticator.  In this case, the oidc authenticator.  This authenticator takes your id_token, refresh_token and your OIDC client_secret and will refresh your token automatically.  Once you have authenticated:
+
+```
+$ kubectl config set-credentials --auth-provider=oidc
+$ kubectl config set-credentials --auth-provider-args=idp-issuer-url=( issuer url )
+$ kubectl config set-credentials --auth-provider-args=client_id=( your client id )
+$ kubectl config set-credentials --auth-provider-args=client_secret=( your client secret )
+$ kubectl config set-credentials --auth-provider-args=refresh-token=( your refresh token )
+```
+
+The major downside to this approach is you need the client_secret for your client.  In order for this scheme to work each of the users with access to Kubernetes must know the secret.  This isn't how OIDC is really supposed to work and can open up some security holes.  Also, from a policy standpoint this is another password so it could end up having policy management issues around passwords.
+
+#### Option 2 - Use the --token Option
+
+The kubectl command lets you pass in a token using the --token option.  Simply copy and paste the id_token into this option:
+
+```
+$ kubectl --token=eyJhbGciOiJSUzI1NiJ9.eyJpc3MiOiJodHRwczovL21sYi50cmVtb2xvLmxhbjo4MDQzL2F1dGgvaWRwL29pZGMiLCJhdWQiOiJrdWJlcm5ldGVzIiwiZXhwIjoxNDc0NTk2NjY5LCJqdGkiOiI2RDUzNXoxUEpFNjJOR3QxaWVyYm9RIiwiaWF0IjoxNDc0NTk2MzY5LCJuYmYiOjE0NzQ1OTYyNDksInN1YiI6Im13aW5kdSIsInVzZXJfcm9sZSI6WyJ1c2VycyIsIm5ldy1uYW1lc3BhY2Utdmlld2VyIl0sImVtYWlsIjoibXdpbmR1QG5vbW9yZWplZGkuY29tIn0.f2As579n9VNoaKzoF-dOQGmXkFKf1FMyNV0-va_B63jn-_n9LGSCca_6IVMP8pO-Zb4KvRqGyTP0r3HkHxYy5c81AnIh8ijarruczl-TK_yF5akjSTHFZD-0gRzlevBDiH8Q79NAr-ky0P4iIXS8lY9Vnjch5MF74Zx0c3alKJHJUnnpjIACByfF2SCaYzbWFMUNat-K1PaUk5-ujMBG7yYnr95xD-63n8CO8teGUAAEMx6zRjzfhnhbzX-ajwZLGwGUBT4WqjMs70-6a7_8gZmLZb2az1cZynkFRj2BaCkVT3A2RrjeEwZEtGXlMqKJ1_I2ulrOVsYx01_yD35-rw get nodes
+```
+
+When using OpenUnison, the ScaleJS Token implementation IdTokenLoader will display your current id_token so you can copy and paste it.  Depending on how long the id_token is available this can get cumbersome quickly.  OpenUnison's OIDC implementation for Kubernetes adds a service that lets you get the current id_token using the refresh_token.  This lets you continuously use an existing session.  It won't generate a new id_token the way the kubectl oidc authenticator will, but it does retrieve the current one.  In order to get a new id_token you have to refresh your ScaleJS Token screen.  Once the session no longer exists, either because its expired or the user logged out the refresh_token will stop providing the id_token.  Your kubectl command would look like:
+
+```
+$ kubectl --token=`curl https://host/k8stoken?refresh_token=SDFSDGC... 2>/dev/null` get nodes
+```
+
+So long as the user's session is still valid, you won't need to make changes to your kubectl command.  This command does NOT work using the set-credentials option in kubectl.
+
+*Add demo of getting an id token from the refresh token*
+
+
+### How will groups be stored?
+
+Kubernetes only needs to see a single claim with a list of groups, but how does that claim get generated?  Where is the data stored?  Do you control the datastore?  In most instances if using Active Directory
+
+
+
 
 ### No existing Identity Provider
 
