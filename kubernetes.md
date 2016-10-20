@@ -314,17 +314,16 @@ Once you have generated an id_token, how will you use it with kubectl?  In OIDC,
 
 #### Option 1 - OIDC Authenticator
 
-The first option is to use a new feature in 1.3 that isn't well documented called a custom authenticator.  In this case, the oidc authenticator.  This authenticator takes your id_token, refresh_token and your OIDC client_secret and will refresh your token automatically.  Once you have authenticated:
+The first option is to use a new feature in 1.4 that isn't well documented called a custom authenticator.  In this case, the oidc authenticator.  This authenticator takes your id_token, refresh_token and your OIDC client_secret and will refresh your token automatically.  Once you have authenticated:
 
 ```
-$ kubectl config set-credentials --auth-provider=oidc
-$ kubectl config set-credentials --auth-provider-args=idp-issuer-url=( issuer url )
-$ kubectl config set-credentials --auth-provider-args=client_id=( your client id )
-$ kubectl config set-credentials --auth-provider-args=client_secret=( your client secret )
-$ kubectl config set-credentials --auth-provider-args=refresh-token=( your refresh token )
+$ kubectl config set-credentials USER_NAME --auth-provider=oidc
+$ kubectl config set-credentials USER_NAME --auth-provider-arg=idp-issuer-url=( issuer url )
+$ kubectl config set-credentials USER_NAME --auth-provider-arg=client-id=( your client id )
+$ kubectl config set-credentials USER_NAME --auth-provider-arg=client-secret=( your client secret )
+$ kubectl config set-credentials USER_NAME --auth-provider-arg=refresh-token=( your refresh token )
 ```
-
-The major downside to this approach is you need the client_secret for your client.  In order for this scheme to work each of the users with access to Kubernetes must know the secret.  This isn't how OIDC is really supposed to work and can open up some security holes.  Also, from a policy standpoint this is another password so it could end up having policy management issues around passwords.
+The major downside to this approach is you need the client_secret for your client unless you are using OpenUnison which will issue a session specific client_secret.  If not using OpenUnison, in order for this scheme to work each of the users with access to Kubernetes must know the secret.  This isn't how OIDC is really supposed to work and can open up some security holes.  Also, from a policy standpoint this is another password so it could end up having policy management issues around passwords.
 
 #### Option 2 - Use the --token Option
 
