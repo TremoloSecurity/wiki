@@ -323,6 +323,23 @@ $ kubectl config set-credentials USER_NAME --auth-provider-arg=client-id=( your 
 $ kubectl config set-credentials USER_NAME --auth-provider-arg=client-secret=( your client secret )
 $ kubectl config set-credentials USER_NAME --auth-provider-arg=refresh-token=( your refresh token )
 ```
+In addition, you can add these configuration options manually to your ~/.kube/config:
+```
+users:
+- name: USER_NAME
+  user:
+    auth-provider:
+      config:
+        client-id: kubernetes
+        client-secret: 76d19a54-d855-4c1c-8a35-b4b2306b1210
+        id-token: eyJhbGciOiJSUzI1NiJ9.eyJpc3MiOiJodHRwczovL21sYi50cmVtb2xvLmxhbjo4MDQzL2F1dGgvaWRwL29pZGMiLCJhdWQiOiJrdWJlcm5ldGVzIiwiZXhwIjoxNDc2OTY5OTYwLCJqdGkiOiJodTYxLWpiS2ZYM2lXdkZqMWF0eTdBIiwiaWF0IjoxNDc2OTY5OTAwLCJuYmYiOjE0NzY5Njk3ODAsInN1YiI6Im1tb3NsZXkiLCJ1c2VyX3JvbGUiOlsiYWRtaW4iLCJ1c2VycyIsImFwcHJvdmVycyJdLCJlbWFpbCI6Im1tb3NsZXlAZG9lc250ZXhpc3QuY29tIn0.U1CfKDZPZFx6HIiNZtmwLFCfa2Mn3OddFf7uAQe9XhN1BInRHFwaw-u3O-wrhuBAxcGQWahuzC9BruvlYrzktI8_AcjYH6sykUp_g6YtFxSaQd9PvJxRE6Ez4AZcbVhwgO5yCpNyIp_4DdR1n3xWVzJYzx2p5FH3amqxPekzrSikZ_UCdXs7S4ltWDjfjmCSCcDt9Z9HITe5clKtRkftgqGFccIs3xI_gpqu76rXuxwIdn-FSQ3Llj0VnN3UrXmSINPJKEtYqDfkDtIe5WpFOjCHZ1-SLqScF9maMeFY1Pn1kEz2a0f6LPMYPeZbM070PtETKQGMtJ4IDXcsbOee4Q
+        idp-certificate-authority: /path/to/ca.pem
+        idp-issuer-url: https://mlb.tremolo.lan:8043/auth/idp/oidc/
+        refresh-token: q1bKLFOyUko2LkqNjMouiww0MMowMq10N8tJCyyPKTUwME6BkEo6Sql5yUWVBSWpKUGphaWpxSVAfZH+jublPj6VpllZOUGOJd4VRQG5iUEFFQV5JYlF2mHZ/lkZ5fm5Hqbh2YaVfkbBaUUhoUHllUGJ5ZkBee5+EUZKtQA=
+      name: oidc
+```
+
+
 The major downside to this approach is you need the client_secret for your client unless you are using OpenUnison which will issue a session specific client_secret.  If not using OpenUnison, in order for this scheme to work each of the users with access to Kubernetes must know the secret.  This isn't how OIDC is really supposed to work and can open up some security holes.  Also, from a policy standpoint this is another password so it could end up having policy management issues around passwords.
 
 #### Option 2 - Use the --token Option
