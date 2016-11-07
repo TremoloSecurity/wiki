@@ -363,15 +363,14 @@ So long as the user's session is still valid, you won't need to make changes to 
 
 ### How will groups be stored?
 
-Kubernetes only needs to see a single claim with a list of groups, but how does that claim get generated?  Where is the data stored?  Do you control the datastore?  In most instances if using Active Directory
+Kubernetes only needs to see a single claim with a list of groups, but how does that claim get generated?  Where is the data stored?  Do you control the datastore?  In most instances if using Active Directory you won't be able to store your authorization data in AD.  This is usually because the person who owns your Active Directory won't generally be the same person that will own your Kubernetes deployment.  Its usually pretty easy to get a read-only service account for AD, but write access usually requires clearing multiple hurdles.  
 
+### How will usesr be added to groups?
 
+Once you know where you are storing groups, how will you add users to those groups.  You can add them manually but how are you tracking that?  Are your admins going to add every user to a group manually?  How will you know if a user should have access?
 
+### Group Storage Architectures
 
-### No existing Identity Provider
+#### Dedicated Directory
 
-### Existing Identity Provider
-
-### Dedicated Directory
-
-### Read-Only Access Directory
+#### Read-Only Access Directory
