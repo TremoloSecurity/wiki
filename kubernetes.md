@@ -15,7 +15,7 @@ Certificate authentication uses TLS mutual authentication, where a client and se
 both have a private key and certificate when interacting.  In many ways this mechanism
 requires the least amount of infrastructure but also has several drawbacks.
 
-![TLS Authentication](https://www.gliffy.com/go/publish/11413743)
+![TLS Authentication](https://www.tremolosecurity.com/site/wp-content/uploads/k8s_tls.png)
 
 When authenticating, kubectl will present your certificate to the API server as your identity.  
 Prior to Kubernetes 1.3 this was the most powerful authentication mechanism as it only required
