@@ -84,6 +84,8 @@ Unison in general supports LDAPv3 compliant directories and databases that suppo
 | OpenShift           | Origin / Enterprise | 3.0+                             |       |
 | Red Hat             | FreeIPA / Identity Management | 4.x                    |       |
 | MongoDB             | MongoDB          | &gt;= 3.x                           | TLS support requires restarts |
+| OpenStack           | Keystone         | 3.x                                 | Tested on RDO |
+| OpenShift           | Red Hat          | 3.x                                 | https://hub.openshift.com/primed/23-tremolo-security-inc |
 
 Last Mile Integration
 ---------------------
