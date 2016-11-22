@@ -121,6 +121,7 @@ The below systems have been tested with Unison. If an OpenID Connect system is n
 | mod_auth_openidc (https://github.com/pingidentity/mod_auth_openidc)                              | PingIdentity | 2.0 | N/A               | Yes       | Tested on CentOS 7 |
 | Microsoft.AspNetCore.Authentication.OpenIdConnect                            | Micrososft | 1.1.0           | N/A               | Yes              |                                                |
 | Kubernetes           | Kubernetes    | 1.3+         | N/A               | Yes              |                                                |
+| KeyCloak             | Red Hat       | 2.2.1+ | Yes | Not Tested |
 
 
 Tremolo Security
