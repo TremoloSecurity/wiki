@@ -294,7 +294,7 @@ To update these roles for other namespaces, just change the "namespace" label wh
 
 When designing an identity management solution for Kubernetes there are several points to take into account.  We'll cover each of these topics in detail.
 
-### How will uses authenticate?
+### How will users authenticate?
 
 When identifying how users will authenticate remember that Kubernetes keep the following in mind:
 
@@ -365,7 +365,7 @@ So long as the user's session is still valid, you won't need to make changes to 
 
 Kubernetes only needs to see a single claim with a list of groups, but how does that claim get generated?  Where is the data stored?  Do you control the datastore?  In most instances if using Active Directory you won't be able to store your authorization data in AD.  This is usually because the person who owns your Active Directory won't generally be the same person that will own your Kubernetes deployment.  Its usually pretty easy to get a read-only service account for AD, but write access usually requires clearing multiple hurdles.  
 
-### How will usesr be added to groups?
+### How will users be added to groups?
 
 Once you know where you are storing groups, how will you add users to those groups.  You can add them manually but how are you tracking that?  Are your admins going to add every user to a group manually?  How will you know if a user should have access?
 
@@ -373,4 +373,22 @@ Once you know where you are storing groups, how will you add users to those grou
 
 #### Dedicated Directory
 
+There are multiple situations where you can use a single dedicated user directory (LDAP or otherwise) for both authentication and authorizations depending on your identity provider and setup:
+
+| Model                              | Benefits                 | Drawbacks                   |
+| ---------------------------------- | ------------------------ | --------------------------- |
+| All users and groups in AD         | Simpler architecture     | Requires organizational support from the owner of the Active Directory infrastructure |
+| Synchronize data from Active Directory | More control         | Keeping data up to date is difficult, passwords need to be proxied or synchronized, most sync systems must be installed on each domain controller requiring organizational buy in from the owner of the Active Directory infrastructure |
+| Cross forest trust  (FreeIPA/Red Hat Identity Management) | Passwords aren't synced, data management is transparent | Requires organizational cooperation with the owners of Active Directory |
+
+The common drawback to all of these approaches is that you need organizational buy in and cooperation from the person who owns your enterprise's Active Directory infrastructure.  This person is rarely worried about, or tied to, the success of specific applications but is instead focussed on providing access to workstations, managing servers, etc.  If you can get this buy-in its great, but its also very rare.
+
 #### Read-Only Access Directory
+
+![Read-Only Active Directory](https://www.gliffy.com/go/publish/image/11539159/L.png)
+
+If you can't store your authorization in Active Directory, don't.  Store it in something you control.  In the above model, OpenUnison is talking to multiple Active Directory forests over LDAP(S) and is connected to Kubernetes via OpenID Connect.  Its authenticating against against Active Directory, but loading groups from MongoDB.  This gives you the best of both worlds, authenticate with a central credential but manage authorization internally.
+
+This approach is based on your identity  provider.  OpenUnison does this well because of its internal LDAP virtual directory.
+
+
